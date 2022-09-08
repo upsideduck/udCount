@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String           @id @unique
+  identifier_token  String           @unique
+  hashed_password  String?
+  RefreshToken     RefreshToken[]
+  counters         Counter[]
+  email            String           @unique
+  username         String           @unique
+  user_data        String?
+  @@map("user")
+}
+
+model Counter {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime? @updatedAt
+  counts          Count[]
+  type            Type     @relation(references: [id], fields: [type_id], onDelete: Cascade)
+  type_id         Int      
+  title           String   @db.VarChar(255)
+  description     String?  @db.VarChar(255)
+  user            User     @relation(references: [id], fields: [user_id], onDelete: Cascade)
+  user_id         String
+
+  @@index([user_id])
+  @@index([type_id])
+  @@map("counter")
+}
+
+model Count {
+  id          Int         @id @default(autoincrement())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  time        DateTime    @default(now())
+  reset       Boolean     @default(false)
+  removed     Boolean     @default(false)
+  counter     Counter     @relation(references: [id], fields: [counter_id], onDelete: Cascade)
+  counter_id  Int
+
+  @@index([counter_id])
+  @@map("count")
+}
+
+model Type {
+  id          Int         @id @default(autoincrement())
+  createdAt   DateTime    @default(now()) 
+  title       String      
+  Counter     Counter[]
+
+  @@map("type")
+}
+
+model RefreshToken {
+  id            Int    @id @unique @default(autoincrement())
+  refresh_token String @unique @db.VarChar(300)
+  user          User  @relation(references: [id], fields: [user_id], onDelete: Cascade)
+  user_id       String
+
+  @@index([user_id])
+  @@map("refresh_token")
+}
